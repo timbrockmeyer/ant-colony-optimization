@@ -75,15 +75,3 @@ class ACO:
         with Pool(n_cores) as p:
             ant_map = p.map(partial(self._wrapper, *args, **kwargs), zip(X, seeds))
             return ant_map
-
-dist = np.genfromtxt("ACO/distance.txt")
-dist_list = [dist for _ in range(3)]
-
-import timeit
-
-aco = ACO(n_ants=10, n_best=3, alpha=1, beta=1, init_pheromone=1, max_iterations=100)
-aco.run(dist)
-
-%timeit aco.run_parallel(dist_list)
-
-%timeit for d in dist_list: aco.run(d)
