@@ -4,7 +4,7 @@ from functools import partial
 
 class ACO:
 
-    def __init__(self, n_ants=10, n_best=3, alpha=1, beta=1, evaporation_rate=0.05, init_pheromone=1, max_iterations=500):
+    def __init__(self, n_ants=10, n_best=3, alpha=1, beta=1, evaporation_rate=0.1, init_pheromone=1, max_iterations=500):
         self._n_ants = n_ants
         self._n_best = n_best
         self._init_pheromone = init_pheromone
@@ -49,7 +49,8 @@ class ACO:
         all_time_lowest_cost = np.inf
         last_iteration_lowest_cost = np.inf
         convergence = 0
-        while convergence < 20 or step_count < self._max_iterations:
+        step_count = 0
+        while convergence < 20 and step_count < self._max_iterations:
             solutions = np.array([self._generate_solution() for _ in range(self._n_ants)])
             routes, costs = zip(*sorted(solutions, key=lambda x: x[1]))
 
@@ -78,8 +79,3 @@ class ACO:
         with Pool(n_cores) as p:
             ant_map = p.map(partial(self._wrapper, *args, **kwargs), zip(X, seeds))
             return ant_map
-
-dist = np.genfromtxt("distance.txt")
-
-aco = ACO(1, 1, 1, 1, 0.05, 1, 10)
-aco.run(dist)
