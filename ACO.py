@@ -11,6 +11,7 @@ class ACO:
         self._alpha = alpha
         self._beta = beta
         self._evaporation_rate = evaporation_rate
+        self._max_iterations = max_iterations
 
     def _generate_solution(self):
         transition_matrix = np.nan_to_num(self._pheromone_matrix**self._alpha * (1/self._cost_matrix)**self._beta)
@@ -28,7 +29,7 @@ class ACO:
     def _daemon_actions(self, *args, **kwargs):
         pass
 
-    def _update_function(self, idx, path_cost):
+    def _intensification(self, idx, path_cost):
         return (1/path_cost) * len(self._cost_matrix)
 
     def _pheromone_update(self, paths, costs):
@@ -36,7 +37,7 @@ class ACO:
         for path, cost in zip(paths, costs):
             x = 0
             for y in path:
-                self._pheromone_matrix[x,y] += self._update_function((x,y), cost)
+                self._pheromone_matrix[x,y] += self._intensification((x,y), cost)
                 x = y
 
     def run(self, X, *args, **kwargs):
@@ -48,22 +49,24 @@ class ACO:
         all_time_lowest_cost = np.inf
         last_iteration_lowest_cost = np.inf
         convergence = 0
-        while convergence < 10:
+        while convergence < 20 or step_count < self._max_iterations:
             solutions = np.array([self._generate_solution() for _ in range(self._n_ants)])
             routes, costs = zip(*sorted(solutions, key=lambda x: x[1]))
 
-            lowest_cost_in_run = costs[0]
-            if lowest_cost_in_run == last_iteration_lowest_cost:
+            lowest_cost_in_iter = costs[0]
+            if lowest_cost_in_iter == last_iteration_lowest_cost:
                 convergence += 1
             else:
                 convergence = 0
-                last_iteration_lowest_cost = lowest_cost_in_run
-            if lowest_cost_in_run < all_time_lowest_cost:
+                last_iteration_lowest_cost = lowest_cost_in_iter
+            if lowest_cost_in_iter < all_time_lowest_cost:
+                all_time_lowest_cost = lowest_cost_in_iter
                 all_time_shortest_path = routes[0]
 
             self._daemon_actions(*args, **kwargs)
             self._pheromone_update(routes[:self._n_best], costs[:self._n_best])
-        return routes[0], lowest_cost_in_run
+            step_count += 1
+        return all_time_shortest_path, all_time_lowest_cost
 
     def _wrapper(self, *wrap_args, **kwargs):
         X, seed, *args = wrap_args[0]
@@ -75,3 +78,8 @@ class ACO:
         with Pool(n_cores) as p:
             ant_map = p.map(partial(self._wrapper, *args, **kwargs), zip(X, seeds))
             return ant_map
+
+dist = np.genfromtxt("distance.txt")
+
+aco = ACO(1, 1, 1, 1, 0.05, 1, 10)
+aco.run(dist)
