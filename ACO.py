@@ -49,8 +49,9 @@ class ACO:
         all_time_lowest_cost = np.inf
         last_iteration_lowest_cost = np.inf
         convergence = 0
-        step_count = 0
-        while convergence < 20 and step_count < self._max_iterations:
+        for _ in range(self._max_iterations):
+            if convergence >= 20: break
+
             solutions = np.array([self._generate_solution() for _ in range(self._n_ants)])
             routes, costs = zip(*sorted(solutions, key=lambda x: x[1]))
 
@@ -60,13 +61,13 @@ class ACO:
             else:
                 convergence = 0
                 last_iteration_lowest_cost = lowest_cost_in_iter
+
             if lowest_cost_in_iter < all_time_lowest_cost:
                 all_time_lowest_cost = lowest_cost_in_iter
                 all_time_shortest_path = routes[0]
 
             self._daemon_actions(*args, **kwargs)
             self._pheromone_update(routes[:self._n_best], costs[:self._n_best])
-            step_count += 1
         return all_time_shortest_path, all_time_lowest_cost
 
     def _wrapper(self, *wrap_args, **kwargs):
