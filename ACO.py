@@ -50,7 +50,7 @@ class ACO:
         last_iteration_lowest_cost = np.inf
         convergence = 0
         for _ in range(self._max_iterations):
-            if convergence >= 20: break
+            if convergence >= 5: break
 
             solutions = np.array([self._generate_solution() for _ in range(self._n_ants)])
             routes, costs = zip(*sorted(solutions, key=lambda x: x[1]))
